@@ -18,6 +18,7 @@ export default function CustomerOrder() {
   const [eta, setEta] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState({});
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     
@@ -51,6 +52,18 @@ export default function CustomerOrder() {
 
   const addToCart = (item) => {
     setCart(prev => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }));
+  };
+
+  const removeFromCart = (item) => {
+    setCart(prev => {
+      const newCart = { ...prev };
+      if (newCart[item.id] > 1) {
+        newCart[item.id] -= 1;
+      } else {
+        delete newCart[item.id];
+      }
+      return newCart;
+    });
   };
 
   const placeOrder = async () => {
@@ -184,11 +197,16 @@ export default function CustomerOrder() {
       
       {/* Floating Cart Dock */}
       {Object.keys(cart).length > 0 && (
-          <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-50">
-              <div className="bg-gray-900/95 backdrop-blur-xl text-white p-4 rounded-3xl shadow-2xl flex items-center justify-between border border-white/10 ring-1 ring-black/5">
+          <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-40">
+              <div 
+                  className="bg-gray-900/95 backdrop-blur-xl text-white p-4 rounded-3xl shadow-2xl flex items-center justify-between border border-white/10 ring-1 ring-black/5 cursor-pointer"
+                  onClick={() => setIsCartOpen(true)}
+              >
                   <div className="flex items-center gap-4 pl-2">
                        <div className="p-2 bg-white/10 rounded-xl relative">
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-gray-900"></div>
+                            <div className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 bg-red-500 rounded-full border-2 border-gray-900 flex items-center justify-center text-[10px] font-bold">
+                                {Object.values(cart).reduce((a,b)=>a+b, 0)}
+                            </div>
                             <IconShoppingBag />
                        </div>
                        <div>
@@ -198,13 +216,96 @@ export default function CustomerOrder() {
                   </div>
                   
                   <button 
-                    onClick={placeOrder}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCartOpen(true);
+                    }}
                     className="px-6 py-3 bg-white text-gray-900 font-bold rounded-2xl shadow hover:bg-gray-100 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
                   >
-                    Checkout <ChevronRight />
+                    View Cart <ChevronRight />
                   </button>
               </div>
           </div>
+      )}
+
+      {/* Cart Overlay */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => setIsCartOpen(false)}>
+          <div 
+             className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
+             onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-2xl font-black text-gray-900">Your Cart</h2>
+              <button 
+                onClick={() => setIsCartOpen(false)} 
+                className="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors"
+                aria-label="Close cart"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              {Object.keys(cart).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                  <IconShoppingBag />
+                  <p className="mt-4 font-medium">Your cart is empty</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(cart).map(([id, quantity]) => {
+                    const item = menuItems.find(m => m.id === parseInt(id));
+                    if (!item) return null;
+                    return (
+                      <div key={id} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <div className="flex-1 pr-4">
+                          <h4 className="font-bold text-gray-900 truncate">{item.name}</h4>
+                          <p className="text-blue-600 font-mono font-bold text-sm mt-1">${item.price}</p>
+                        </div>
+                        <div className="flex items-center gap-3 bg-gray-50 rounded-full p-1 border border-gray-100">
+                          <button 
+                            onClick={() => removeFromCart(item)}
+                            className="w-8 h-8 rounded-full bg-white text-gray-600 flex items-center justify-center shadow-sm hover:text-red-500 hover:bg-red-50 transition-colors"
+                            aria-label="Decrease quantity"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
+                          </button>
+                          <span className="font-bold w-4 text-center text-gray-900">{quantity}</span>
+                          <button 
+                            onClick={() => addToCart(item)}
+                            className="w-8 h-8 rounded-full bg-white text-gray-600 flex items-center justify-center shadow-sm hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            aria-label="Increase quantity"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {Object.keys(cart).length > 0 && (
+              <div className="p-6 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                <div className="flex justify-between items-center mb-4 px-2">
+                  <span className="text-gray-500 font-semibold tracking-wide uppercase text-sm">Total Amount</span>
+                  <span className="text-2xl font-black font-mono text-gray-900">${totalAmount}</span>
+                </div>
+                <button 
+                  onClick={() => {
+                     setIsCartOpen(false);
+                     placeOrder();
+                  }}
+                  className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex justify-center items-center gap-2"
+                >
+                  Checkout <ChevronRight />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
       
       
