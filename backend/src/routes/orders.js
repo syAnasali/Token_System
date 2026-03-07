@@ -2,6 +2,47 @@ const express = require('express');
 const router = express.Router();
 const tokenService = require('../services/tokenService');
 const authMiddleware = require('../middleware/auth');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+// GET /api/orders/all - Fetch all orders with optional filters (Admin/Worker)
+router.get('/all', authMiddleware, async (req, res) => {
+  try {
+    const { startDate, endDate, status } = req.query;
+    
+    // Build Prisma query filter
+    const whereClause = {};
+
+    if (status && status !== 'All') {
+      whereClause.status = status;
+    }
+
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) {
+        whereClause.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = new Date(endDate);
+      }
+    }
+
+    const orders = await prisma.order.findMany({
+      where: whereClause,
+      include: {
+        Token: true // Include associated token details
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching all orders:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // POST /api/orders - Create a new order
 router.post('/', async (req, res) => {

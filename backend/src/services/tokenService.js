@@ -54,13 +54,11 @@ const tokenService = {
       include: { order: true },
     });
     
-    // Also update Order status if needed (optional based on strict requirements, but good for consistency)
-    if (status === 'COMPLETED' || status === 'CANCELLED') {
-        await prisma.order.update({
-            where: { id: token.orderId },
-            data: { status },
-        });
-    }
+    // Update Order status to stay in sync with Token
+    await prisma.order.update({
+        where: { id: token.orderId },
+        data: { status },
+    });
 
     return token;
   },

@@ -38,6 +38,23 @@ export const api = {
     },
 
     /**
+     * Fetch all orders with optional filters (Requires auth)
+     */
+    getOrdersList: async (filters = {}) => {
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            const endpoint = `/api/orders/all${queryParams ? `?${queryParams}` : ''}`;
+            const res = await fetch(`${API_BASE}${endpoint}`, {
+                headers: { ...api.getAuthHeaders() }
+            });
+            return handleResponse(res);
+        } catch (error) {
+            console.error(`GET /api/orders/all failed:`, error);
+            throw error;
+        }
+    },
+
+    /**
      * POST request
      * @param {string} endpoint 
      * @param {object} body 
