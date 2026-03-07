@@ -16,9 +16,12 @@ Node.js Backend for the TokenFlow Queue Management System.
    ```
 
 2. **Environment Variables**
-   Copy `.env.example` to `.env` and update `DATABASE_URL`.
-   ```bash
-   cp .env.example .env
+   Create a `.env` file containing the necessary secrets.
+   ```env
+   DATABASE_URL="file:./dev.db"
+   PORT=3000
+   WORKER_PASSWORD="your_secure_password"
+   JWT_SECRET="your_secret_key"
    ```
 
 3. **Database Setup**
@@ -35,11 +38,17 @@ Node.js Backend for the TokenFlow Queue Management System.
 
 ## API Endpoints
 
+### Auth
+- `POST /api/auth/login`
+  - Body: `{ password: "your_secure_password" }`
+  - Returns: `{ token: "jwt_token_string" }`
+
 ### Orders
 - `POST /api/orders`
   - Body: `{ items: [], total: number }`
   - Returns: `{ id, number, status, ... }`
-- `PATCH /api/orders/:id/status`
+- `PATCH /api/orders/:id/status` (Requires JWT)
+  - Headers: `{ Authorization: "Bearer <token>" }`
   - Body: `{ status: "PENDING" | "SERVING" | "COMPLETED" }`
 
 ### Display

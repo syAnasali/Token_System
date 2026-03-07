@@ -14,12 +14,22 @@ async function handleResponse(response) {
 
 export const api = {
     /**
+     * Helper to get auth headers
+     */
+    getAuthHeaders: () => {
+        const token = localStorage.getItem('workerToken');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    },
+
+    /**
      * GET request
      * @param {string} endpoint e.g. '/orders'
      */
     get: async (endpoint) => {
         try {
-            const res = await fetch(`${API_BASE}${endpoint}`);
+            const res = await fetch(`${API_BASE}${endpoint}`, {
+                headers: { ...api.getAuthHeaders() }
+            });
             return handleResponse(res);
         } catch (error) {
             console.error(`GET ${endpoint} failed:`, error);
@@ -36,7 +46,7 @@ export const api = {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...api.getAuthHeaders() },
                 body: JSON.stringify(body)
             });
             return handleResponse(res);
@@ -55,7 +65,7 @@ export const api = {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...api.getAuthHeaders() },
                 body: JSON.stringify(body)
             });
             return handleResponse(res);
@@ -73,7 +83,7 @@ export const api = {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...api.getAuthHeaders() },
                 body: JSON.stringify(body)
             });
             return handleResponse(res);

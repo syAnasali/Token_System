@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { socket } from '../socket';
 
 export default function WorkerDashboard() {
   const [tokens, setTokens] = useState([]);
+  const navigate = useNavigate();
 
   const fetchTokens = () => {
-    api.get('/api/display/queue').then(setTokens).catch(console.error);
+    api.get('/api/display/queue')
+      .then(setTokens)
+      .catch(err => {
+        console.error(err);
+        if (err.message && err.message.includes('401')) {
+          handleLogout();
+        }
+      });
   };
 
   useEffect(() => {
@@ -14,12 +23,10 @@ export default function WorkerDashboard() {
 
     socket.on('order_created', fetchTokens);
     socket.on('status_updated', fetchTokens);
-    // socket.on('queue:updated', fetchTokens);
 
     return () => {
       socket.off('order_created');
       socket.off('status_updated');
-      // socket.off('queue:updated');
     };
   }, []);
 
@@ -27,8 +34,17 @@ export default function WorkerDashboard() {
     try {
       await api.patch(`/api/orders/${id}/status`, { status });
     } catch (err) {
-      alert("Update failed");
+      if (err.message && err.message.includes('401')) {
+        handleLogout();
+      } else {
+        alert("Update failed");
+      }
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('workerToken');
+    navigate('/login');
   };
 
   // Group tokens
@@ -51,7 +67,15 @@ export default function WorkerDashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Kitchen Display System</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Kitchen Display System</h1>
+        <button 
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-bold transition-colors"
+        >
+          Logout
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Now Serving Column */}

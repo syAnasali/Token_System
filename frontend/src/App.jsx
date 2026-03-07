@@ -1,5 +1,7 @@
 import { Link, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 import CustomerOrder from './pages/CustomerOrder';
+import Login from './pages/Login';
 import TokenDisplay from './pages/TokenDisplay';
 import WorkerDashboard from './pages/WorkerDashboard';
 
@@ -19,7 +21,12 @@ function App() {
         <main className="flex-grow p-4">
           <Routes>
             <Route path="/" element={<CustomerOrder />} />
-            <Route path="/worker" element={<WorkerDashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/worker" element={
+              <ProtectedRoute>
+                <WorkerDashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/display" element={<TokenDisplay />} />
           </Routes>
         </main>

@@ -7,7 +7,7 @@ TokenFlow is a modern, real-time token and order management system built for caf
 ## ✨ Features
 
 * **Customer Ordering Experience**: A sleek, user-friendly UI for customers to browse the menu, add items to a cart, and place orders.
-* **Worker Dashboard**: A real-time, centralized control panel for staff to view incoming orders, update token statuses, and manage the live queue efficiently.
+* **Worker Dashboard**: A real-time, centralized control panel for staff to view incoming orders, update token statuses, and manage the live queue efficiently. Protected by simple JWT password authentication to ensure privacy and security.
 * **Live Token Display**: A dynamic public display showing tokens that are currently in queue ("Serving Soon") and tokens ready for pickup ("Now Serving").
 * **Real-time Synchronization**: Powered by Socket.IO, ensuring instant updates across all connected clients without manual page refreshes.
 * **Responsive Design**: Beautifully crafted with Tailwind CSS to look great on desktop displays, tablets, and mobile devices.
@@ -56,10 +56,12 @@ Follow these steps to get a local copy up and running.
    ```
 
 3. **Configure Environment Variables**:
-   In the `backend` directory, create a `.env` file and set the database URL:
+   In the `backend` directory, create a `.env` file and set the required keys:
    ```env
    DATABASE_URL="file:./dev.db"
-   PORT=5000
+   PORT=3000
+   WORKER_PASSWORD="your_secure_password"
+   JWT_SECRET="your_secret_key"
    ```
 
 4. **Initialize Database**:

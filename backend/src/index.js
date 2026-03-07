@@ -9,6 +9,7 @@ dotenv.config();
 
 const orderRoutes = require('./routes/orders');
 const displayRoutes = require('./routes/display');
+const authRoutes = require('./routes/auth');
 const seed = require('./sampleData');
 
 const app = express();
@@ -30,6 +31,7 @@ app.set('io', io);
 // Routes
 app.use('/api/orders', orderRoutes);
 app.use('/api/display', displayRoutes);
+app.use('/api/auth', authRoutes);
 
 // Database client
 const { PrismaClient } = require('@prisma/client');
