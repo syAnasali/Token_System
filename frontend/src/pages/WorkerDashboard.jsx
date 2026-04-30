@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { socket } from '../socket';
 
 export default function WorkerDashboard() {
   const [tokens, setTokens] = useState([]);
+  const [toast, setToast] = useState(null);
+  const toastTimeout = useRef(null);
   const navigate = useNavigate();
 
   const fetchTokens = () => {
@@ -30,15 +32,37 @@ export default function WorkerDashboard() {
     };
   }, []);
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, status, prevStatus, tokenNumber) => {
     try {
       await api.patch(`/api/orders/${id}/status`, { status });
+      
+      if (prevStatus && tokenNumber) {
+        setToast({ id, status, prevStatus, tokenNumber });
+        if (toastTimeout.current) clearTimeout(toastTimeout.current);
+        toastTimeout.current = setTimeout(() => {
+          setToast(null);
+        }, 5000);
+      } else {
+        setToast(null);
+        if (toastTimeout.current) clearTimeout(toastTimeout.current);
+      }
     } catch (err) {
       if (err.message && err.message.includes('401')) {
         handleLogout();
       } else {
         alert("Update failed");
       }
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!toast) return;
+    try {
+      await api.patch(`/api/orders/${toast.id}/status`, { status: toast.prevStatus });
+      setToast(null);
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    } catch (err) {
+      alert("Undo failed");
     }
   };
 
@@ -102,12 +126,12 @@ export default function WorkerDashboard() {
                        </ul>
                    ) : <div className="text-xs text-red-500">No items data</div>}
                  </div>
-                 <button 
-                   onClick={() => updateStatus(token.id, 'COMPLETED')}
-                   className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 h-fit"
-                 >
-                   DONE
-                 </button>
+                  <button 
+                    onClick={() => updateStatus(token.id, 'COMPLETED', token.status, token.number)}
+                    className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 h-fit transition-colors"
+                  >
+                    DONE
+                  </button>
                </div>
              )})}
              {serving.length === 0 && <div className="text-gray-400 italic">No active orders</div>}
@@ -136,18 +160,43 @@ export default function WorkerDashboard() {
                        </ul>
                    ) : <div className="text-xs text-red-500">No items data</div>}
                  </div>
-                 <button 
-                   onClick={() => updateStatus(token.id, 'SERVING')}
-                   className="bg-blue-500 text-white px-4 py-2 rounded font-bold hover:bg-blue-600 h-fit"
-                 >
-                   SERVING
-                 </button>
+                  <button 
+                    onClick={() => updateStatus(token.id, 'SERVING', token.status, token.number)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded font-bold hover:bg-blue-600 h-fit transition-colors"
+                  >
+                    SERVING
+                  </button>
                </div>
              )})}
              {pending.length === 0 && <div className="text-gray-400 italic">Queue empty</div>}
            </div>
         </div>
       </div>
+
+      {/* Undo Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 z-50 border border-gray-700 transition-all duration-300">
+          <div>
+            <span className="font-bold text-lg">{toast.tokenNumber}</span> marked as <span className="font-bold">{toast.status === 'COMPLETED' ? 'DONE' : toast.status}</span>
+          </div>
+          <button 
+            onClick={handleUndo}
+            className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 px-4 py-2 rounded font-bold transition-colors ml-2"
+          >
+            Undo
+          </button>
+          <button 
+            onClick={() => {
+              setToast(null);
+              if (toastTimeout.current) clearTimeout(toastTimeout.current);
+            }}
+            className="text-gray-400 hover:text-white ml-2 text-xl leading-none"
+            title="Dismiss"
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 }
